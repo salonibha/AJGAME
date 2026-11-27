@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flappy Dino: AJ Coins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f3ead7;
+    --ink: #2b2118;
+    --muted: #6d5d4b;
+    --frame: #2b2118;
+    --panel: rgba(255, 248, 230, 0.96);
+    --panel-ink: #2b2118;
+    --accent: #b8620a;
+    --display: "Lilita One", "Arial Rounded MT Bold", "Arial Black", system-ui, sans-serif;
+    --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1511;
+      --ink: #f4e8d0;
+      --muted: #b5a58c;
+      --frame: #090706;
+      --panel: rgba(36, 29, 22, 0.96);
+      --panel-ink: #f4e8d0;
+      --accent: #ffbf4d;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1511;
+    --ink: #f4e8d0;
+    --muted: #b5a58c;
+    --frame: #090706;
+    --panel: rgba(36, 29, 22, 0.96);
+    --panel-ink: #f4e8d0;
+    --accent: #ffbf4d;
+    color-scheme: dark;
+  }
+
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  .wrap {
+    width: min(94vw, calc((100vh - 90px) * 0.6667), 440px);
+    width: min(94vw, calc((100dvh - 90px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 0.6667), 440px);
+  }
+  .frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border: 4px solid var(--frame);
+    border-radius: 18px;
+    overflow: hidden;
+    container-type: inline-size;
+    touch-action: none;
+    cursor: pointer;
+    box-shadow: 0 10px 0 -4px var(--frame);
+    background: #8fd0e0;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  #hud {
+    position: absolute;
+    top: 3.5cqw;
+    left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5cqw;
+    pointer-events: none;
+  }
+  #score {
+    font-family: var(--display);
+    font-size: 13cqw;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: 1.6cqw #3a2a1a;
+    paint-order: stroke fill;
+    min-width: 1ch;
+  }
+  .coin-ico {
+    width: 9cqw; height: 9cqw;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe980, #f5b700 70%);
+    border: 0.9cqw solid #c98400;
+    display: grid; place-items: center;
+    font-family: var(--display);
+    font-size: 3.6cqw;
+    color: #7a4600;
+  }
+
+  .panel {
+    position: absolute;
+    left: 50%; top: 44%;
+    transform: translate(-50%, -50%);
+    width: 82%;
+    padding: 5cqw 5cqw 4.5cqw;
+    text-align: center;
+    background: var(--panel);
+    color: var(--panel-ink);
+    border: 0.8cqw solid var(--frame);
+    border-radius: 4cqw;
+    pointer-events: none;
+  }
+  .panel h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: 11.5cqw;
+    line-height: 1;
+    margin: 0 0 2.5cqw;
+  }
+  .panel p { margin: 0; font-weight: 700; font-size: 4.2cqw; line-height: 1.35; }
+  .panel .stats { display: flex; justify-content: center; gap: 7cqw; margin-top: 1cqw; }
+  .panel .stat b { display: block; font-family: var(--display); font-weight: 400; font-size: 9cqw; line-height: 1.1; }
+  .panel .stat span { font-size: 3.6cqw; font-weight: 800; color: var(--muted); }
+  .panel .cta { margin-top: 3.5cqw; font-weight: 800; font-size: 4.2cqw; color: var(--accent); }
+  [hidden] { display: none !important; }
+
+  .bar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  button {
+    font: 800 14px var(--body);
+    color: var(--ink);
+    background: transparent;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 5px 14px;
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="frame" id="frame">
+    <canvas id="c" aria-label="Flappy Dino game"></canvas>
+
+    <div id="hud" hidden><span class="coin-ico" aria-hidden="true">AJ</span><span id="score">0</span></div>
+
+    <div class="panel" id="ready">
+      <h1>Flappy Dino</h1>
+      <div class="cta">Tap, click or press Space to hop</div>
+    </div>
+
+    <div class="panel" id="over" hidden>
+      <h1>Extinct!</h1>
+      <div class="stats">
+        <div class="stat"><b id="fScore">0</b><span>AJ coins</span></div>
+        <div class="stat"><b id="fBest">0</b><span>Best</span></div>
+      </div>
+      <div class="cta">Tap or press Space to try again</div>
+    </div>
+  </div>
+
+  <div class="bar" style="margin-top:10px">
+    <span>Space, click or tap to hop</span>
+    <button id="mute" type="button" aria-pressed="false">Sound on</button>
+  </div>
+</div>
+
+<script src="Jones.js"></script>
